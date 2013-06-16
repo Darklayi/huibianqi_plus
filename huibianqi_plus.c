@@ -988,15 +988,7 @@ int main(void)
 					if (!strncmp(p, "syscall", 7) && p[s] == ':')
 						instruction[s++] = ':';
 					instruction[s] = 0;
-					/*if (!strncmp("syscall:", &in[i][j], 8))
-					{
-						for (s = 0; s < LABELLENGTH && in[i][s+j] != ':' && in[i][s+j] != ' '; s++)
-							label[k].name[s] = in[i][s+j];
-						label[k].name[s] = '\0';
-						label[k].location = i;
-						k++;
-						break;
-					}*/
+					
 					if (!strcmp(instruction, "la"))
 					{
 						Psuedo_La(ins, p, ins_length, labelname);
