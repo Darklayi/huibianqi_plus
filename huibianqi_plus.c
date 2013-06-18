@@ -4,7 +4,7 @@
 #define LABELLENGTH 20
 #define LABELNUM    50
 #define INSTRUCTIONLENGTH 4000
-#define LINELENGTH 50
+#define LINELENGTH 200
 #define OFFSET 2000
 struct {
 	char name[LABELLENGTH];
@@ -27,7 +27,7 @@ void getASCII(char byte[], char *c)
 int Match(char in[], char out[])
 {
 	int i, res, mark = 0;
-	char reg[31][3] = {
+	char reg[31][4] = {
 		"$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", "$t0",
 		"$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$s0",
 		"$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$t8",
@@ -71,6 +71,7 @@ int MatchLabel(char *p)
 			res = i;
 			break;
 		}
+
 	return res;
 }
 
@@ -203,7 +204,7 @@ void R_type3(char s[], char in[], const char *c, int address)
 
 void J_type(char s[], char in[], const char *c, int address2)
 {
-	char *p = in+1;
+	char *p = in;
 	char address[26];
 	char num[10];
 	int address_length = 0;
@@ -216,9 +217,10 @@ void J_type(char s[], char in[], const char *c, int address2)
 	memset(num, 0, 10);
 	memset(l, 0, LABELLENGTH);
 
+	for ( ; *p <= 'z' && *p >= 'a'; p++);
 	for ( ; *p == ' ' || *p == '\t'; p++);
-	//label
 
+	//label
 	if ((*p <= 'Z' && *p >= 'A') || (*p <= 'z' && *p >= 'a'))
 	{
 		for (i = 0; i < LABELLENGTH; ++i)
@@ -341,7 +343,7 @@ void I_type1(char s[], char in[], const char *c, int address)
 		}
 		else if (((i == 2 && j == 2) || (i == 1 && j == 1)) && ((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z')))
 		{
-			for (k = 0; *p != 0 && *p != '#' && *p != '\n' && *p != ' '; k++)
+			for (k = 0; *p != 0 && *p != '#' && *p != '\n' && *p != ' ' && *p != '\t'; k++)
 				labelname[k] = *p++;
 			labelname[k] = 0;
 			labelmark = 1;
@@ -691,8 +693,8 @@ void Psuedo_La(char s[][LINELENGTH], char in[], int index, char labelname[])
 {
 	int i;
 	char *p = in;
-	char lui[30] = "lui ";
-	char ori[30] = "ori ";
+	char lui[LINELENGTH] = "lui ";
+	char ori[LINELENGTH] = "ori ";
 
 	if (labelname[0])
 	{
@@ -722,6 +724,7 @@ void Psuedo_La(char s[][LINELENGTH], char in[], int index, char labelname[])
 			break;
 	strcat(lui, p);
 	strcat(ori, p);
+
 	for (i = 0; i < 30; i++)
 	{
 		if (lui[i] == '\n')
@@ -777,7 +780,7 @@ int main(void)
 		}
 		filename[strlen(filename) - 5] = 0;
 		strcat(filename, ".o");
-		foutput1 = fopen(filename, "w");
+		foutput1 = fopen(filename, "wb");
 		filename[strlen(filename) - 2] = 0;
 		strcat(filename, ".txt");
 		foutput2 = fopen(filename, "w");
@@ -874,7 +877,7 @@ int main(void)
 							hexmark = 0;
 							product = 1;
 							memset(data, 0, 33);
-							
+
 							while (*p2 == ' ' || *p2 == '\t' || *p2 == '-' || *p2 == ',')
 								p2++;
 							if (*p2 == '\n')
@@ -969,16 +972,27 @@ int main(void)
 			else if (textmark == 1 || datamark == 0)
 			{
 				//Deal with pseudo
+				for (j = 0; j < LINELENGTH && in[i][j] != '#' && in[i][j] != '\n'; ++j)
+					if (in[i][j] == ':')
+						break;
+
 				if (in[i][j] == ':')
 				{
 					p = &in[i][j] - 1;
-					while (*p != ' ' && *p != '\t' && *p != '\n')
+					while (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
 						p--;
 					p++;
 					for (s = 0; s < LABELLENGTH && p[s] != ':' && p[s] != ' ' && p[s] != '\t'; s++)
 						labelname[s] = p[s];
 					labelname[s] = 0;
 				}
+
+				if (j == LINELENGTH || in[i][j] == '#' || in[i][j] == '\n')
+					j = 0;
+
+				for ( ; j < LINELENGTH && in[i][j] != '#' && in[i][j] != '\n'; ++j)
+					if (in[i][j] <= 'z' && in[i][j] >= 'a')
+						break;
 
 				if (in[i][j] <= 'z' && in[i][j] >= 'a')
 				{
@@ -988,7 +1002,7 @@ int main(void)
 					if (!strncmp(p, "syscall", 7) && p[s] == ':')
 						instruction[s++] = ':';
 					instruction[s] = 0;
-					
+
 					if (!strcmp(instruction, "la"))
 					{
 						Psuedo_La(ins, p, ins_length, labelname);
