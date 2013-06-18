@@ -1140,7 +1140,10 @@ int main(void)
 		for (j = 0; j < 32; j++)
 		{
 			mips <<= 1;
-			mips += (unsigned long)out[i][j]-'0';
+			if (out[i][j] == '0' || out[i][j] == '1')
+				mips += (unsigned long)out[i][j]-'0';
+			else
+				break;
 		}
 		fwrite(&mips, sizeof(mips), 1, foutput1);
 		fputs(out[i], foutput2);
