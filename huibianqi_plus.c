@@ -861,7 +861,7 @@ int main(void)
 								strncat(data, byte, 8);
 							}
 							strcpy(out[t++], data);
-							pc++;
+							pc += 4;
 							if (*p == '"')
 							 	break;
 						}
@@ -913,7 +913,7 @@ int main(void)
 								num /= 2;
 							}
 							strcpy(out[t++], data);
-							pc++;
+							pc += 4;
 						}
 						break;
 					}
@@ -959,10 +959,14 @@ int main(void)
 							exit(1);
 						}
 
-						for (s = 0; s < num/4 + 1; s++)
+						if (num%4 == 0)
+							num /= 4;
+						else
+							num = num / 4 + 1;
+						for (s = 0; s < num; s++)
 						{
 							strcpy(out[t++], data);
-							pc++;
+							pc += 4;
 						}
 
 						break;
