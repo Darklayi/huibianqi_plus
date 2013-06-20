@@ -95,15 +95,26 @@ void R_type1(char s[], char in[], const char *c, int address)
 		exit(1);
 	}
 	strncpy(s, "000000", 6);
-	p = &s[6];
-	err += Match(r[1], p);
-	p = &s[11];
-	err += Match(r[2], p);
-	p = &s[16];
+
 	if (in[0] != 'd')
+	{
+		p = &s[6];
+		err += Match(r[1], p);
+		p = &s[11];
+		err += Match(r[2], p);
+		p = &s[16];
 		err += Match(r[0], p);
+	}
 	else
-		strncpy(p, "00000", 5);	
+	{
+		p = &s[6];
+		err += Match(r[0], p);
+		p = &s[11];
+		err += Match(r[1], p);
+		p = &s[16];
+		strncpy(p, "00000", 5);
+	}
+
 	p = &s[21];
 	strncpy(p, "00000", 5);
 	p += 5;
@@ -192,9 +203,20 @@ void R_type3(char s[], char in[], const char *c, int address)
 	}
 	strncpy(s, "000000", 6);
 	p = &s[6];
-	err += Match(r, p);
-	p = &s[11];
-	strncpy(p, "000000000000000", 15);
+	if (in[0] == 'j')
+	{
+		err += Match(r, p);
+		p = &s[11];
+		strncpy(p, "0000000000", 10);
+	}
+	else
+	{
+		strncpy(p, "0000000000", 10);
+		p = &s[16];
+		err += Match(r, p);
+	}
+	p = &s[21];
+	strncpy(p, "00000", 5);
 	p = &s[26];
 	strncpy(p, c, 6);
 	if (err)
@@ -413,7 +435,7 @@ void I_type1(char s[], char in[], const char *c, int address)
 
 void I_type2(char s[], char in[], const char *c, int address)
 {
-	int i;
+	int i, j;
 	int err = 0;
 	int hexmark = 0;
 	char *p = in;
@@ -423,15 +445,19 @@ void I_type2(char s[], char in[], const char *c, int address)
 	unsigned long sum = 0, product = 1;
 	memset(offset, 0, 16);
 
-	for (i = 0; *p != 0 && *p != '#' && *p != '\n'; p++)
+	for (i = j = 0; *p != 0 && *p != '#' && *p != '\n'; p++)
 	{
 		if (*p == '0' && *(p+1) == 'x')
 			hexmark = 1;
 		if (*p == '$')
 			r[i++] = p;
-		if (i == 2 || (i == 1 &&
-					  ((*p <= 'Z' && *p >= 'A') || (*p <= 'z' && *p >= 'a')) &&
-					  ((*(p+1) <= 'Z' && *(p+1) >= 'A') || (*(p+1) <= 'z' && *(p+1) >= 'a'))))
+		if (*p == ',')
+			j++;
+		if ((i == 2 && j == 1) || (i == 1 && j == 1 && 
+					  	((*p <= 'Z' && *p >= 'A') || (*p <= 'z' && *p >= 'a')) &&
+					  	((*(p+1) <= 'Z' && *(p+1) >= 'A') || (*(p+1) <= 'z' && *(p+1) >= 'a'))
+					  )
+		    )
 			break;
 	}
 	if (i != 2 && !((*p <= 'Z' && *p >= 'A') || (*p <= 'z' && *p >= 'a')))
@@ -536,7 +562,7 @@ void I_type3(char s[], char in[], const char *c, int address)
 								  	)
 								  	&&
 								    (
-								    	(*(p+1) <= 'Z' && *(p+1) >= 'A') || (*(p+1) <= 'z' && *(p+1) >= 'a')
+								    	(*(p+1) <= 'Z' && *(p+1) >= 'A') || (*(p+1) <= 'z' && *(p+1) >= 'a') || *(p+1) == '_'
 								    )
 								  )
 								)
