@@ -85,10 +85,10 @@ void R_type1(char s[], char in[], const char *c, int address)
 	{
 		if (*p == '$')
 			r[i++] = p;
-		if (i == 3)
+		if ((i == 3 && in[0] != 'd') || (i == 2 && in[0] == 'd'))
 			break;
 	}
-	if (i != 3)
+	if ((i != 3 && in[0] != 'd') || (i != 2 && in[0] == 'd'))
 	{
 		printf("%d: Error Input!\n", address);
 		system("pause");
@@ -100,7 +100,10 @@ void R_type1(char s[], char in[], const char *c, int address)
 	p = &s[11];
 	err += Match(r[2], p);
 	p = &s[16];
-	err += Match(r[0], p);
+	if (in[0] != 'd')
+		err += Match(r[0], p);
+	else
+		strncpy(p, "00000", 5);	
 	p = &s[21];
 	strncpy(p, "00000", 5);
 	p += 5;
@@ -1090,12 +1093,15 @@ int main(void)
 		else if (!strcmp(instruction, "sllv"))  R_type1(out[i+offset], p, "000100", i+offset);
 		else if (!strcmp(instruction, "srlv"))  R_type1(out[i+offset], p, "000110", i+offset);
 		else if (!strcmp(instruction, "srav"))  R_type1(out[i+offset], p, "000111", i+offset);
+		else if (!strcmp(instruction, "div"))   R_type1(out[i+offset], p, "011010", i+offset);
 
 		else if (!strcmp(instruction, "sll"))   R_type2(out[i+offset], p, "000000", i+offset);
 		else if (!strcmp(instruction, "srl"))   R_type2(out[i+offset], p, "000010", i+offset);
 		else if (!strcmp(instruction, "sra"))   R_type2(out[i+offset], p, "000011", i+offset);
 
 		else if (!strcmp(instruction, "jr"))    R_type3(out[i+offset], p, "001000", i+offset);
+		else if (!strcmp(instruction, "mfhi"))  R_type3(out[i+offset], p, "010000", i+offset);
+		else if (!strcmp(instruction, "mflo"))  R_type3(out[i+offset], p, "010010", i+offset);
 
 		//j_type
 		else if (!strcmp(instruction, "j"))     J_type(out[i+offset], p, "000010", i+offset);
